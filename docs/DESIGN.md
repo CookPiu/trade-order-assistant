@@ -70,10 +70,11 @@ trade-order-assistant/
 ### 4.1 对话提单图（LangGraph）
 
 ```
-intent → extract → normalize_material → link_contract → quota_check → assemble_draft → respond
-                                                                         ↑
-                                         用户补充字段（下一轮）──────────┘
+extract ─帮助/闲聊→ help
+   └─其他→ merge → normalize_material → link_contract → respond
 ```
+
+图中实际节点如上：意图与字段在 `extract` 一次抽出；`merge` 把本轮结果合并进草稿并换算相对日期；合同带出、额度核验和草稿装配都在 `link_contract` 调用的 `draft_validator.assemble` 中完成。下面按处理步骤说明：
 
 - `intent`：识别新建销售 / 新建采购 / 修改草稿 / 继续上次 / 帮助。
 - `extract`：大模型按 JSON schema 输出合同号、项目、品名、规格、数量、单位、单价、交期；相对日期（“后天”）在服务端按当前日期换算，不交给模型算。
