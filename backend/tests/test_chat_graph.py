@@ -94,6 +94,39 @@ async def test_missing_contract_asks_back(db, monkeypatch):
     assert "还需要确认" in state["reply"]
 
 
+async def test_order_type_follows_contract_when_not_stated(db, monkeypatch):
+    # 用户没说“采购”，关联采购合同时按合同类型生成采购订单
+    extracted = {"intent": "new_sales", "order_type": None, "contract_no": "2026-CG-031", "delivery_text": "周三",
+                 "items": [{"raw_name": "P.O42.5 散装水泥", "spec": "", "quantity": 200, "unit": "吨"}]}
+    async with db() as s:
+        user = await get_user(s, "jbr01")
+        state = await _run(s, user, "2026-CG-031 补 P.O42.5 散装水泥 200 吨，周三到", DraftData(), extracted, monkeypatch)
+    a = state["assembled"]
+    assert a.data.order_type == "purchase"
+    assert not any("不能用于" in i.message for i in a.issues)
+    assert "已按合同设为采购订单" in state["reply"]
+
+    # 后续轮次没有更换合同，不再改动单据类型
+    extracted2 = {**extracted, "intent": "modify", "delivery_text": a.data.delivery_date.isoformat(),
+                  "items": [{"raw_name": "P.O42.5 散装水泥", "spec": "", "quantity": 300, "unit": "吨"}]}
+    async with db() as s:
+        user = await get_user(s, "jbr01")
+        state2 = await _run(s, user, "数量改成 300 吨", a.data, extracted2, monkeypatch)
+    assert state2["assembled"].data.order_type == "purchase"
+    assert "已按合同设为" not in state2["reply"]
+
+
+async def test_stated_order_type_conflicting_with_contract_is_flagged(db, monkeypatch):
+    extracted = {"intent": "new_sales", "order_type": "sales", "contract_no": "2026-CG-031", "delivery_text": "周三",
+                 "items": [{"raw_name": "P.O42.5 散装水泥", "spec": "", "quantity": 200, "unit": "吨"}]}
+    async with db() as s:
+        user = await get_user(s, "jbr01")
+        state = await _run(s, user, "销售给客户 200 吨 P.O42.5 散装水泥，走 2026-CG-031", DraftData(), extracted, monkeypatch)
+    a = state["assembled"]
+    assert a.data.order_type == "sales"
+    assert any("不能用于销售订单" in i.message for i in a.errors)
+
+
 async def test_help_intent_skips_draft(db, monkeypatch):
     async with db() as s:
         user = await get_user(s, "jbr01")

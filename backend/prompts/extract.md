@@ -2,7 +2,7 @@
 
 JSON 字段：
 - intent：new_sales（新建销售订单）、new_purchase（新建采购订单）、modify（补充或修改当前草稿）、help（询问用法）、chat（与提单无关的闲聊）之一。当前草稿已有内容且用户在补充、更正信息时用 modify。
-- order_type：sales 或 purchase。“下订单给客户、发货给项目、销售”为 sales；“向供应商采购、进货、采购”为 purchase。无法判断时沿用当前草稿，当前草稿也没有时为 null。
+- order_type：sales 或 purchase。“下订单给客户、发货给项目、销售”为 sales；“向供应商采购、进货、采购”为 purchase。只在用户本轮消息表明了销售或采购时填写；本轮没有表明时为 null，不要沿用当前草稿，也不要根据合同号猜测（系统会沿用当前草稿或按合同类型确定）。
 - contract_no：合同编号原文，如 2026-WZ-089。没有提到时沿用当前草稿。
 - project_name：工程项目名称，如“科技城项目”。
 - delivery_text：用户关于交期的原话，如“后天”“11月20日”“下周三”“3天内”。不要换算成日期。本轮没提到交期时，原样返回当前草稿中的 delivery_date。

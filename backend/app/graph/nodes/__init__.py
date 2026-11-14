@@ -35,6 +35,7 @@ class ChatState(TypedDict, total=False):
     intent: str
     extracted: dict[str, Any]
     notes: list[str]
+    type_from_contract: bool
     reply: str
     assembled: Any
 
@@ -98,13 +99,18 @@ def merge(state: ChatState, config: RunnableConfig) -> ChatState:
     ex = state["extracted"]
     notes: list[str] = []
     d = current.model_copy(deep=True)
+    type_stated = True
     if ex.get("order_type") in ("sales", "purchase"):
         d.order_type = ex["order_type"]
     elif state.get("intent") == "new_purchase":
         d.order_type = "purchase"
+    else:
+        type_stated = False
     for f in ("contract_no", "project_name", "address", "contact", "remark"):
         if ex.get(f):
             setattr(d, f, str(ex[f]).strip())
+    # 本轮未说明单据类型且关联了新合同时，在 normalize_material 中按合同类型确定（与图片识别一致）
+    type_from_contract = not type_stated and bool(d.contract_no) and d.contract_no != current.contract_no
     if ex.get("delivery_text"):
         parsed = parse_date_phrase(ex["delivery_text"], state["today"])
         if parsed is None:
@@ -132,7 +138,7 @@ def merge(state: ChatState, config: RunnableConfig) -> ChatState:
                     item.unit_price = prev.unit_price
             items.append(item)
         d.items = items
-    return {"draft": d.model_dump(mode="json"), "notes": notes}
+    return {"draft": d.model_dump(mode="json"), "notes": notes, "type_from_contract": type_from_contract}
 
 
 def llm_picker(session: AsyncSession):
@@ -174,7 +180,12 @@ async def normalize_material(state: ChatState, config: RunnableConfig) -> ChatSt
         contract = await draft_validator.find_contract(session, d.contract_no)
         if contract is not None and contract.dept_id != user.dept_id:
             contract = None
-    notes = await normalize_items(session, d, contract, config["configurable"].get("picker"))
+    notes = []
+    if contract is not None and state.get("type_from_contract") and d.order_type != contract.contract_type:
+        d.order_type = contract.contract_type
+        label = draft_validator.TYPE_LABEL[contract.contract_type]
+        notes.append(f"合同 {contract.contract_no} 是{label}合同，已按合同设为{label}订单")
+    notes += await normalize_items(session, d, contract, config["configurable"].get("picker"))
     # 用户只说了工地简称时，用项目登记的完整收货地址
     if contract is not None and d.address and d.address in contract.project.address:
         d.address = contract.project.address
