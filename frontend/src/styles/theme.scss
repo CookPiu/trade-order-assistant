@@ -1,0 +1,113 @@
+// 浅色商务蓝主题（FR-048、D-018）：覆盖 Element Plus CSS 变量，并定义业务状态色
+:root {
+  --el-color-primary: #1f4e8c;
+  --el-color-primary-light-3: #6283af;
+  --el-color-primary-light-5: #8fa7c6;
+  --el-color-primary-light-7: #bccadd;
+  --el-color-primary-light-8: #d2dce8;
+  --el-color-primary-light-9: #e9edf4;
+  --el-color-primary-dark-2: #193e70;
+
+  --el-color-danger: #c8322b;
+  --el-color-danger-light-3: #d9706b;
+  --el-color-danger-light-5: #e49995;
+  --el-color-danger-light-7: #efc2bf;
+  --el-color-danger-light-8: #f4d6d5;
+  --el-color-danger-light-9: #faeaea;
+  --el-color-danger-dark-2: #a02822;
+
+  --el-color-warning: #c98a12;
+  --el-color-warning-light-3: #d9ad59;
+  --el-color-warning-light-5: #e4c589;
+  --el-color-warning-light-7: #efdcb8;
+  --el-color-warning-light-8: #f4e8d0;
+  --el-color-warning-light-9: #faf3e7;
+  --el-color-warning-dark-2: #a16e0e;
+
+  --el-color-success: #2f855a;
+  --el-color-success-light-9: #eaf3ee;
+
+  --el-bg-color-page: #f2f4f7;
+  --el-border-radius-base: 4px;
+  --el-font-size-base: 13px;
+  --el-font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  // 业务状态色
+  --app-over: var(--el-color-danger); // 超额
+  --app-over-bg: var(--el-color-danger-light-9);
+  --app-warn: var(--el-color-warning); // 提醒
+  --app-warn-bg: var(--el-color-warning-light-9);
+  --app-pending: #c8322b; // 待确认字段边框
+  --app-pending-bg: #fff6f5;
+  --app-header-bg: #183b69;
+  --app-header-fg: #ffffff;
+  --app-panel-bg: #ffffff;
+  --app-text-secondary: #5c6573;
+  --app-gap: 12px;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--el-bg-color-page);
+  color: #1d2733;
+  font-family: var(--el-font-family);
+  font-size: var(--el-font-size-base);
+}
+
+// 紧凑表格
+.el-table {
+  --el-table-header-bg-color: #eef2f7;
+  --el-table-header-text-color: #33404f;
+  .el-table__cell {
+    padding: 6px 0;
+  }
+}
+
+.app-panel {
+  background: var(--app-panel-bg);
+  border: 1px solid #e3e8ef;
+  border-radius: 6px;
+}
+
+// 待确认或异常字段高亮
+.field-pending {
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-date-editor.el-input__wrapper,
+  .el-input-number .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--app-pending) inset;
+    background: var(--app-pending-bg);
+  }
+}
+
+.field-warn {
+  .el-input__wrapper,
+  .el-input-number .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--app-warn) inset;
+    background: var(--app-warn-bg);
+  }
+}
+
+.field-reason {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 2px;
+  &.error {
+    color: var(--app-pending);
+  }
+  &.warning {
+    color: var(--app-warn-dark, #a16e0e);
+  }
+}
+
+.empty-hint {
+  color: var(--app-text-secondary);
+  text-align: center;
+  padding: 32px 0;
+}
